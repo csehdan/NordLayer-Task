@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "partycli": {
+      "commandName": "Project",
+      "commandLineArgs": "server_list --france"
+    }
+  }
+}
