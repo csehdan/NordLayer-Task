@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using partycli.Models;
+using partycli.Resources;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace partycli
                         {
                             var serverList = GetAllServersListAsync();
                             StoreValue("serverlist", serverList, false);
-                            Log("Saved new server list: " + serverList);
+                            Log(Strings.labelSavedNewServerList + ": " + serverList);
 							Helpers.DisplayList(serverList);
                         }
                     }
@@ -58,7 +59,7 @@ namespace partycli
 							Helpers.DisplayList(Properties.Settings.Default.serverlist);
                         } else
                         {
-                            Console.WriteLine("Error: There are no server data in local storage");
+                            Console.WriteLine(Strings.labelErrorTherearenoserverdatainlocalstorage);
                         }
                     }
                     else if (arg == "--france")
@@ -69,7 +70,7 @@ namespace partycli
                         var query = new VpnServerQuery(null,74,null,null,null, null);
                         var serverList = GetAllServerByCountryListAsync(query.CountryId.Value); //France id == 74
                         StoreValue("serverlist", serverList, false);
-                        Log("Saved new server list: " + serverList);
+                        Log(Strings.labelSavedNewServerList + ": " + serverList);
 						Helpers.DisplayList(serverList);
                     }
                     else if (arg == "--TCP")
@@ -80,7 +81,7 @@ namespace partycli
                         var query = new VpnServerQuery(5,null,null,null,null, null);
                         var serverList = GetAllServerByProtocolListAsync((int)query.Protocol.Value);
                         StoreValue("serverlist", serverList, false);
-                        Log("Saved new server list: " + serverList);
+                        Log(Strings.labelSavedNewServerList + ": " + serverList);
                         Helpers.DisplayList(serverList);
                     }
                 }
@@ -89,11 +90,13 @@ namespace partycli
 
             if(currentState == States.none)
             {
-                Console.WriteLine("To get and save all servers, use command: partycli.exe server_list");
-                Console.WriteLine("To get and save France servers, use command: partycli.exe server_list --france");
-                Console.WriteLine("To get and save servers that support TCP protocol, use command: partycli.exe server_list --TCP");
-                Console.WriteLine("To see saved list of servers, use command: partycli.exe server_list --local ");
+                Console.WriteLine(Strings.labelAllServers);
+                Console.WriteLine(Strings.labelFranceServers);
+                Console.WriteLine(Strings.labelTCPServer);
+                Console.WriteLine(Strings.labelSavedServers);
             }
+
+            // TODO organize all string constants to resources
 
             Console.Read();
         }
