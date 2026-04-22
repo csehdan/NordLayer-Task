@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using partycli.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,10 +26,10 @@ namespace partycli
                         currentState = States.server_list;
                         if (argIndex >= args.Count())
                         {
-                            var serverList = getAllServersListAsync();
-                            storeValue("serverlist", serverList, false);
-                            log("Saved new server list: " + serverList);
-                            displayList(serverList);
+                            var serverList = GetAllServersListAsync();
+                            StoreValue("serverlist", serverList, false);
+                            Log("Saved new server list: " + serverList);
+							Helpers.DisplayList(serverList);
                         }
                     }
                     if (arg == "config")
@@ -44,8 +45,8 @@ namespace partycli
                     }
                     else
                     {
-                        storeValue(proccessName(name), arg);
-                        log("Changed " + proccessName(name) + " to " + arg);
+                        StoreValue(Helpers.ProccessName(name), arg);
+                        Log("Changed " + Helpers.ProccessName(name) + " to " + arg);
                         name = null;
                     }
                 }
@@ -53,8 +54,8 @@ namespace partycli
                 {
                     if (arg == "--local")
                     {
-                        if (!String.IsNullOrEmpty(Properties.Settings.Default.serverlist)) { 
-                        displayList(Properties.Settings.Default.serverlist);
+                        if (!String.IsNullOrEmpty(Properties.Settings.Default.serverlist)) {
+							Helpers.DisplayList(Properties.Settings.Default.serverlist);
                         } else
                         {
                             Console.WriteLine("Error: There are no server data in local storage");
@@ -66,10 +67,10 @@ namespace partycli
                         //albania == 2
                         //Argentina == 10
                         var query = new VpnServerQuery(null,74,null,null,null, null);
-                        var serverList = getAllServerByCountryListAsync(query.CountryId.Value); //France id == 74
-                        storeValue("serverlist", serverList, false);
-                        log("Saved new server list: " + serverList);
-                        displayList(serverList);
+                        var serverList = GetAllServerByCountryListAsync(query.CountryId.Value); //France id == 74
+                        StoreValue("serverlist", serverList, false);
+                        Log("Saved new server list: " + serverList);
+						Helpers.DisplayList(serverList);
                     }
                     else if (arg == "--TCP")
                     {
@@ -77,10 +78,10 @@ namespace partycli
                         //Tcp = 5
                         //Nordlynx = 35
                         var query = new VpnServerQuery(5,null,null,null,null, null);
-                        var serverList = getAllServerByProtocolListAsync((int)query.Protocol.Value);
-                        storeValue("serverlist", serverList, false);
-                        log("Saved new server list: " + serverList);
-                        displayList(serverList);
+                        var serverList = GetAllServerByProtocolListAsync((int)query.Protocol.Value);
+                        StoreValue("serverlist", serverList, false);
+                        Log("Saved new server list: " + serverList);
+                        Helpers.DisplayList(serverList);
                     }
                 }
                 argIndex = argIndex + 1;
@@ -93,10 +94,11 @@ namespace partycli
                 Console.WriteLine("To get and save servers that support TCP protocol, use command: partycli.exe server_list --TCP");
                 Console.WriteLine("To see saved list of servers, use command: partycli.exe server_list --local ");
             }
+
             Console.Read();
         }
 
-        static void storeValue(string name, string value, bool writeToConsole = true)
+		static void StoreValue(string name, string value, bool writeToConsole = true)
         {
             try { 
                 var settings = Properties.Settings.Default;
@@ -109,24 +111,17 @@ namespace partycli
             catch {
                 Console.WriteLine("Error: Couldn't save " + name + ". Check if command was input correctly." );
             }
-
         }
 
-        static string proccessName(string name)
+        static string GetAllServersListAsync()
         {
-            name = name.Replace("-", string.Empty);
-            return name;
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://api.nordvpn.com/v1/servers");
+            var response = client.SendAsync(request).Result;
+            var responseString = response.Content.ReadAsStringAsync().Result;
+            return responseString;
         }
 
-        static string getAllServersListAsync()
-        {
-                var request = new HttpRequestMessage(HttpMethod.Get, "https://api.nordvpn.com/v1/servers");
-                var response = client.SendAsync(request).Result;
-                var responseString = response.Content.ReadAsStringAsync().Result;
-                return responseString;
-        }
-
-        static string getAllServerByCountryListAsync(int countryId)
+        static string GetAllServerByCountryListAsync(int countryId)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, "https://api.nordvpn.com/v1/servers?filters[servers_technologies][id]=35&filters[country_id]=" + countryId);
             var response = client.SendAsync(request).Result;
@@ -134,7 +129,7 @@ namespace partycli
             return responseString;
         }
 
-        static string getAllServerByProtocolListAsync(int vpnProtocol)
+        static string GetAllServerByProtocolListAsync(int vpnProtocol)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, "https://api.nordvpn.com/v1/servers?filters[servers_technologies][id]=" + vpnProtocol);
             var response = client.SendAsync(request).Result;
@@ -142,18 +137,7 @@ namespace partycli
             return responseString;
         }
 
-        static void displayList(string serverListString)
-        {
-            var serverlist = JsonConvert.DeserializeObject<List<ServerModel>>(serverListString);
-            Console.WriteLine("Server list: ");
-            for (var index = 0; index < serverlist.Count; index++)
-            {
-                Console.WriteLine("Name: " + serverlist[index].Name);
-            }
-            Console.WriteLine("Total servers: " + serverlist.Count);
-        }
-
-        static void log(string action)
+        static void Log(string action)
         {
             var newLog = new LogModel
             {
@@ -171,47 +155,8 @@ namespace partycli
                 currentLog = new List<LogModel> { newLog };
             }
 
-            storeValue("log", JsonConvert.SerializeObject(currentLog), false);
+            StoreValue("log", JsonConvert.SerializeObject(currentLog), false);
         }
-    }
-
-    internal class VpnServerQuery
-    {
-             public int? Protocol { get; set; }
-
-            public int? CountryId { get; set;}
-
-            public int? CityId { get; set;}
-
-            public int? RegionId { get; set;}
-
-            public int? SpecificServcerId { get; set;}
-
-            public int? ServerGroupId { get; set;}
-
-            public VpnServerQuery(int? protocol, int? countryId, int? cityId, int? regionId, int? specificServcerId, int? serverGroupId)
-            {
-                Protocol = protocol;
-                CountryId = countryId;
-                CityId = cityId;
-                RegionId = regionId;
-                SpecificServcerId = specificServcerId;
-                ServerGroupId = serverGroupId;
-            }
-    }
-
-    class LogModel
-    {
-        public string Action { get; set; }
-        public DateTime Time { get; set; }
-    }
-
-    class ServerModel
-    {
-        public string Name { get; set; }
-        public int Load { get; set; }
-        public string Status { get; set; }
-
     }
 
     enum States
